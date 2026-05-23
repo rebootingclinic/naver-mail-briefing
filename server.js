@@ -46,6 +46,16 @@ app.post('/check', async (req, res) => {
   res.redirect('/?checked=1&new=' + result.newCount);
 });
 
+// 환경변수 디버그 (임시)
+app.get('/debug/env', (req, res) => {
+  res.json({
+    hasKakaoKey: !!process.env.KAKAO_REST_KEY,
+    kakaoKeyLength: process.env.KAKAO_REST_KEY?.length || 0,
+    kakaoKeyPrefix: process.env.KAKAO_REST_KEY?.substring(0, 6) || 'none',
+    authUrl: getAuthUrl(),
+  });
+});
+
 // 카카오 로그인 시작
 app.get('/auth/kakao', (req, res) => {
   res.redirect(getAuthUrl());
