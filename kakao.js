@@ -1,12 +1,15 @@
 const { db } = require('./db');
 
-const KAKAO_REST_KEY = process.env.KAKAO_REST_KEY;
-const REDIRECT_URI = process.env.KAKAO_REDIRECT_URI || 'https://naver-mail-briefing-production.up.railway.app/auth/kakao/callback';
+const REDIRECT_URI = 'https://naver-mail-briefing-production.up.railway.app/auth/kakao/callback';
+
+function getKey() {
+  return process.env.KAKAO_REST_KEY;
+}
 
 // 카카오 로그인 URL 생성
 function getAuthUrl() {
   const params = new URLSearchParams({
-    client_id: KAKAO_REST_KEY,
+    client_id: getKey(),
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
     scope: 'talk_message',
@@ -21,7 +24,7 @@ async function getTokens(code) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: KAKAO_REST_KEY,
+      client_id: getKey(),
       redirect_uri: REDIRECT_URI,
       code,
     }),
@@ -36,7 +39,7 @@ async function refreshTokens(refreshToken) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
-      client_id: KAKAO_REST_KEY,
+      client_id: getKey(),
       refresh_token: refreshToken,
     }),
   });
