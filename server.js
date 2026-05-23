@@ -41,14 +41,18 @@ app.post('/check', async (req, res) => {
 // 설정 페이지
 app.get('/settings', async (req, res) => {
   const kakaoKey = await getSetting('kakao_rest_key') || '';
-  res.render('settings', { kakaoKey, query: req.query });
+  const tokenResult = await db.execute('SELECT access_token, refresh_token FROM kakao_tokens LIMIT 1');
+  const accessToken = tokenResult.rows[0]?.access_token || '';
+  const refreshToken = tokenResult.rows[0]?.refresh_token || '';
+  res.render('settings', { kakaoKey, accessToken, refreshToken, query: req.query });
 });
 
 // 설정 저장
 app.post('/settings', async (req, res) => {
-  const { kakao_rest_key } = req.body;
-  if (kakao_rest_key) {
-    await setSetting('kakao_rest_key', kakao_rest_key.trim());
+  const { kakao_rest_key, kakao_access_token, kakao_refresh_token } = req.body;
+  if (kakao_rest_key) await setSetting('kakao_rest_key', kakao_rest_key.trim());
+  if (kakao_access_token) {
+    await saveTokens(kakao_access_token.trim(), kakao_refresh_token?.trim() || null);
   }
   res.redirect('/settings?saved=1');
 });

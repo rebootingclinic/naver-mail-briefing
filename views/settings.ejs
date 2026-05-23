@@ -28,22 +28,28 @@
 
       <form method="POST" action="/settings">
         <div class="form-group">
-          <label class="form-label">카카오 REST API 키</label>
+          <label class="form-label">카카오 액세스 토큰</label>
           <input
             type="text"
-            name="kakao_rest_key"
-            value="<%= kakaoKey %>"
-            placeholder="35eb44058d00ea86a0745ecfd468b544"
+            name="kakao_access_token"
+            value="<%= accessToken %>"
+            placeholder="액세스 토큰을 입력하세요"
             class="form-input"
           />
-          <p class="form-hint">카카오 개발자 콘솔 → 내 앱 → 앱 키 → REST API 키</p>
+          <p class="form-hint">카카오 개발자 콘솔 → 도구 → REST API 테스트 → 토큰 발급</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">카카오 리프레시 토큰 <span style="font-weight:400;color:#aaa;">(선택)</span></label>
+          <input
+            type="text"
+            name="kakao_refresh_token"
+            value="<%= refreshToken %>"
+            placeholder="리프레시 토큰 (있으면 자동 갱신됩니다)"
+            class="form-input"
+          />
         </div>
         <button type="submit" class="btn-save">💾 저장</button>
       </form>
-
-      <div class="divider" style="margin-top:28px"></div>
-      <p style="margin-bottom:14px; color:#555;">카카오 로그인으로 알림을 연결하세요.</p>
-      <a href="/auth/kakao" class="btn-kakao" style="display:inline-block; padding:12px 24px;">💬 카카오 로그인으로 알림 연결</a>
     </div>
   </main>
 
