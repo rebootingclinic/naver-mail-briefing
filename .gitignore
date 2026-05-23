@@ -1,0 +1,7 @@
+node_modules/
+.env
+pdfs/
+briefings.db
+processed.json
+server-out.txt
+server-err.txt
