@@ -3,7 +3,9 @@ const { db, getSetting, setSetting } = require('./db');
 const REDIRECT_URI = 'https://naver-mail-briefing-production.up.railway.app/auth/kakao/callback';
 
 async function getKey() {
-  return await getSetting('kakao_rest_key');
+  const fromDb = await getSetting('kakao_rest_key');
+  if (fromDb) return fromDb;
+  return '35eb44058d00ea86a0745ecfd468b544'; // 기본 키
 }
 
 // 카카오 로그인 URL 생성
