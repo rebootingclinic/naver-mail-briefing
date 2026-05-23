@@ -4,7 +4,7 @@ const { simpleParser } = require('mailparser');
 const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
-const db = require('./db');
+const { db } = require('./db');
 
 const SENDER = 'ch-aide@aidepartners.com';
 const PDF_DIR = path.join(__dirname, 'pdfs');
@@ -45,9 +45,11 @@ async function checkMail() {
       for await (const msg of messages) {
         const uid = String(msg.uid);
 
-        // 이미 저장된 메일은 건너뜀
-        const exists = db.prepare('SELECT id FROM briefings WHERE uid = ?').get(uid);
-        if (exists) continue;
+        const existing = await db.execute({
+          sql: 'SELECT id FROM briefings WHERE uid = ?',
+          args: [uid],
+        });
+        if (existing.rows.length > 0) continue;
 
         const subject = msg.envelope?.subject || '(제목 없음)';
         const mailDate = msg.envelope?.date
@@ -66,7 +68,6 @@ async function checkMail() {
           const filePath = path.join(PDF_DIR, safeName);
           fs.writeFileSync(filePath, pdf.content);
 
-          // PDF 텍스트 추출
           let pdfContent = '';
           try {
             const data = await pdfParse(pdf.content);
@@ -75,11 +76,11 @@ async function checkMail() {
             pdfContent = '(PDF 텍스트 추출 실패)';
           }
 
-          // DB 저장
-          db.prepare(`
-            INSERT OR IGNORE INTO briefings (uid, subject, sender, mail_date, pdf_filename, pdf_content)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(uid, subject, SENDER, mailDate, safeName, pdfContent);
+          await db.execute({
+            sql: `INSERT OR IGNORE INTO briefings (uid, subject, sender, mail_date, pdf_filename, pdf_content)
+                  VALUES (?, ?, ?, ?, ?, ?)`,
+            args: [uid, subject, SENDER, mailDate, safeName, pdfContent],
+          });
 
           console.log(`[저장] ${subject} - ${safeName}`);
           newCount++;
