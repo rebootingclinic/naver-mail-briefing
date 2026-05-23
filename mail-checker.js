@@ -5,6 +5,7 @@ const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 const { db } = require('./db');
+const { sendKakaoMessage } = require('./kakao');
 
 const SENDER = 'ch-aide@aidepartners.com';
 const PDF_DIR = path.join(__dirname, 'pdfs');
@@ -83,6 +84,10 @@ async function checkMail() {
           });
 
           console.log(`[저장] ${subject} - ${safeName}`);
+
+          // 카카오톡 알림 전송
+          await sendKakaoMessage(subject, safeName, mailDate);
+
           newCount++;
         }
       }

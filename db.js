@@ -18,6 +18,14 @@ async function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS kakao_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      access_token TEXT,
+      refresh_token TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 module.exports = { db, initDb };

@@ -162,6 +162,48 @@ footer {
   color: #aaa;
 }
 
+/* 헤더 액션 */
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* 카카오 버튼 */
+.btn-kakao {
+  background: #FEE500;
+  color: #3C1E1E;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-kakao:hover { background: #F0D800; }
+
+/* 카카오 연결됨 뱃지 */
+.kakao-badge {
+  background: rgba(255,255,255,0.2);
+  color: #FEE500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid rgba(254,229,0,0.4);
+}
+
+/* 카카오 알림 토스트 */
+.toast-kakao {
+  background: #FFFDE7;
+  border-left-color: #F9A825;
+  color: #5D4037;
+}
+.toast-error {
+  background: #FFEBEE;
+  border-left-color: #e53935;
+  color: #b71c1c;
+}
+
 @media (max-width: 600px) {
   .header-inner { flex-direction: column; gap: 14px; align-items: flex-start; }
   .detail-card { padding: 22px; }
