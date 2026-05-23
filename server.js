@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cron = require('node-cron');
-const { db, initDb } = require('./db');
+const { db, initDb, getSetting, setSetting } = require('./db');
 const { checkMail } = require('./mail-checker');
 const { getAuthUrl, getTokens, saveTokens } = require('./kakao');
 
@@ -13,65 +13,59 @@ app.set('views', './views');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
-// 메인 페이지 - 브리핑 목록
+// 메인 페이지
 app.get('/', async (req, res) => {
   const result = await db.execute(`
     SELECT id, subject, sender, mail_date, pdf_filename, created_at,
            SUBSTR(pdf_content, 1, 300) AS preview
-    FROM briefings
-    ORDER BY created_at DESC
+    FROM briefings ORDER BY created_at DESC
   `);
-  const briefings = result.rows;
-
-  // 카카오 연결 여부 확인
   const kakaoResult = await db.execute('SELECT id FROM kakao_tokens LIMIT 1');
   const kakaoConnected = kakaoResult.rows.length > 0;
-
-  res.render('index', { briefings, query: req.query, kakaoConnected });
+  res.render('index', { briefings: result.rows, query: req.query, kakaoConnected });
 });
 
-// 브리핑 상세 페이지
+// 브리핑 상세
 app.get('/briefing/:id', async (req, res) => {
-  const result = await db.execute({
-    sql: 'SELECT * FROM briefings WHERE id = ?',
-    args: [req.params.id],
-  });
+  const result = await db.execute({ sql: 'SELECT * FROM briefings WHERE id = ?', args: [req.params.id] });
   if (result.rows.length === 0) return res.status(404).send('브리핑을 찾을 수 없습니다.');
   res.render('detail', { briefing: result.rows[0] });
 });
 
-// 수동 메일 확인 트리거
+// 수동 메일 확인
 app.post('/check', async (req, res) => {
   const result = await checkMail();
   res.redirect('/?checked=1&new=' + result.newCount);
 });
 
-// 환경변수 디버그 (임시)
-app.get('/debug/env', (req, res) => {
-  res.json({
-    hasKakaoKey: !!process.env.KAKAO_REST_KEY,
-    kakaoKeyLength: process.env.KAKAO_REST_KEY?.length || 0,
-    kakaoKeyPrefix: process.env.KAKAO_REST_KEY?.substring(0, 6) || 'none',
-    authUrl: getAuthUrl(),
-  });
+// 설정 페이지
+app.get('/settings', async (req, res) => {
+  const kakaoKey = await getSetting('kakao_rest_key') || '';
+  res.render('settings', { kakaoKey, query: req.query });
+});
+
+// 설정 저장
+app.post('/settings', async (req, res) => {
+  const { kakao_rest_key } = req.body;
+  if (kakao_rest_key) {
+    await setSetting('kakao_rest_key', kakao_rest_key.trim());
+  }
+  res.redirect('/settings?saved=1');
 });
 
 // 카카오 로그인 시작
-app.get('/auth/kakao', (req, res) => {
-  res.redirect(getAuthUrl());
+app.get('/auth/kakao', async (req, res) => {
+  const url = await getAuthUrl();
+  res.redirect(url);
 });
 
 // 카카오 OAuth 콜백
 app.get('/auth/kakao/callback', async (req, res) => {
   const { code, error } = req.query;
-  if (error || !code) {
-    return res.redirect('/?kakao=error');
-  }
+  if (error || !code) return res.redirect('/?kakao=error');
   try {
     const tokens = await getTokens(code);
-    if (!tokens.access_token) {
-      return res.redirect('/?kakao=error');
-    }
+    if (!tokens.access_token) return res.redirect('/?kakao=error');
     await saveTokens(tokens.access_token, tokens.refresh_token);
     res.redirect('/?kakao=success');
   } catch (e) {
@@ -86,7 +80,6 @@ cron.schedule('0 * * * *', async () => {
   await checkMail();
 });
 
-// DB 초기화 후 서버 시작
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`✅ 서버 실행 중: http://localhost:${PORT}`);

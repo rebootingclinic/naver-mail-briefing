@@ -26,6 +26,24 @@ async function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )
+  `);
 }
 
-module.exports = { db, initDb };
+async function getSetting(key) {
+  const result = await db.execute({ sql: 'SELECT value FROM settings WHERE key = ?', args: [key] });
+  return result.rows[0]?.value || null;
+}
+
+async function setSetting(key, value) {
+  await db.execute({
+    sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    args: [key, value],
+  });
+}
+
+module.exports = { db, initDb, getSetting, setSetting };

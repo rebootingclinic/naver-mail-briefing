@@ -162,6 +162,33 @@ footer {
   color: #aaa;
 }
 
+/* 폼 */
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #dde3f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.form-input:focus { border-color: #1a56db; }
+.form-hint { font-size: 0.82rem; color: #888; margin-top: 6px; }
+.btn-save {
+  background: #1a56db;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-save:hover { background: #1448c0; }
+
 /* 헤더 액션 */
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 

@@ -1,15 +1,16 @@
-const { db } = require('./db');
+const { db, getSetting, setSetting } = require('./db');
 
 const REDIRECT_URI = 'https://naver-mail-briefing-production.up.railway.app/auth/kakao/callback';
 
-function getKey() {
-  return process.env.KAKAO_REST_KEY;
+async function getKey() {
+  return await getSetting('kakao_rest_key');
 }
 
 // 카카오 로그인 URL 생성
-function getAuthUrl() {
+async function getAuthUrl() {
+  const key = await getKey();
   const params = new URLSearchParams({
-    client_id: getKey(),
+    client_id: key,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
     scope: 'talk_message',
@@ -19,12 +20,13 @@ function getAuthUrl() {
 
 // 인가 코드로 토큰 발급
 async function getTokens(code) {
+  const key = await getKey();
   const res = await fetch('https://kauth.kakao.com/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: getKey(),
+      client_id: key,
       redirect_uri: REDIRECT_URI,
       code,
     }),
@@ -34,12 +36,13 @@ async function getTokens(code) {
 
 // 토큰 갱신
 async function refreshTokens(refreshToken) {
+  const key = await getKey();
   const res = await fetch('https://kauth.kakao.com/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
-      client_id: getKey(),
+      client_id: key,
       refresh_token: refreshToken,
     }),
   });
@@ -61,12 +64,10 @@ async function saveTokens(accessToken, refreshToken) {
   });
 }
 
-// 유효한 액세스 토큰 가져오기 (만료 시 자동 갱신)
+// 유효한 액세스 토큰 가져오기
 async function getValidAccessToken() {
   const tokens = await loadTokens();
   if (!tokens) return null;
-
-  // 토큰 갱신 시도
   try {
     const refreshed = await refreshTokens(tokens.refresh_token);
     if (refreshed.access_token) {
@@ -77,7 +78,6 @@ async function getValidAccessToken() {
   } catch (e) {
     console.error('[카카오] 토큰 갱신 실패:', e.message);
   }
-
   return tokens.access_token;
 }
 
@@ -88,9 +88,7 @@ async function sendKakaoMessage(subject, pdfFilename, mailDate) {
     console.log('[카카오] 토큰 없음 — 알림 건너뜀');
     return;
   }
-
   const text = `📋 새 브리핑 도착!\n\n📅 ${mailDate}\n📄 ${subject}\n🗂 ${pdfFilename}\n\n👉 https://naver-mail-briefing-production.up.railway.app`;
-
   const template = JSON.stringify({
     object_type: 'text',
     text,
@@ -99,7 +97,6 @@ async function sendKakaoMessage(subject, pdfFilename, mailDate) {
       mobile_web_url: 'https://naver-mail-briefing-production.up.railway.app',
     },
   });
-
   const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
     method: 'POST',
     headers: {
@@ -108,7 +105,6 @@ async function sendKakaoMessage(subject, pdfFilename, mailDate) {
     },
     body: new URLSearchParams({ template_object: template }),
   });
-
   const data = await res.json();
   if (data.result_code === 0) {
     console.log('[카카오] 알림 전송 성공');
@@ -117,4 +113,4 @@ async function sendKakaoMessage(subject, pdfFilename, mailDate) {
   }
 }
 
-module.exports = { getAuthUrl, getTokens, saveTokens, sendKakaoMessage };
+module.exports = { getAuthUrl, getTokens, saveTokens, sendKakaoMessage, setSetting };
